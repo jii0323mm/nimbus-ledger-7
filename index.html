@@ -26,7 +26,8 @@
   /* 以 iPhone 16 Pro Max（寬 440pt）原生計算機量測，其他尺寸等比例縮放 */
   :root { --u: calc(min(100vw, 440px) / 440); }
   .calc {
-    width: 100%; max-width: 440px; height: 100%;
+    position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 440px; height: 100vh; height: 100lvh;
     display: flex; flex-direction: column;
     padding: env(safe-area-inset-top) calc(16 * var(--u) + env(safe-area-inset-right))
              calc(env(safe-area-inset-bottom) + 30 * var(--u))
@@ -53,7 +54,7 @@
   }
   .line { white-space: nowrap; transform-origin: right bottom; font-variant-numeric: tabular-nums; }
   #expr { font-size: calc(28 * var(--u)); color: #8e8e93; font-weight: 400; min-height: calc(34 * var(--u)); }
-  #result { font-size: calc(76 * var(--u)); font-weight: 400; line-height: 1; letter-spacing: calc(-0.5 * var(--u)); }
+  #result { font-size: calc(71 * var(--u)); font-weight: 400; line-height: 1; letter-spacing: calc(-0.5 * var(--u)); }
 
   /* 按鍵：每顆約 95.7 × 89.8pt，間距 8pt */
   .keys { display: grid; grid-template-columns: repeat(4, 1fr);
@@ -67,14 +68,16 @@
     transition: background .4s ease, filter .4s ease;
   }
   .key.fn { background: linear-gradient(180deg, #666 0%, #5e5e5e 100%); font-size: calc(40 * var(--u)); }
-  .key.op { background: linear-gradient(180deg, #f39d39 0%, #f09833 100%);
+  .key.op { background: #f09a36;
+            background: linear-gradient(180deg, color(display-p3 0.95 0.612 0.227) 0%, color(display-p3 0.937 0.596 0.208) 100%);
             box-shadow: inset 0 1px 0.5px rgba(255,255,255,.3), inset 0 -1px 1px rgba(0,0,0,.1); }
   .key svg { display: block; overflow: visible; }
   .key.op svg { width: calc(36 * var(--u)); height: calc(36 * var(--u)); }
-  .key.op[data-op="*"] svg { width: calc(37 * var(--u)); height: calc(37 * var(--u)); }
+  .key.op[data-op="*"] svg { width: calc(33 * var(--u)); height: calc(33 * var(--u)); }
   .key[data-k="equals"] svg { width: calc(35 * var(--u)); height: calc(35 * var(--u)); }
-  .key[data-k="backspace"] svg { width: calc(42 * var(--u)); height: calc(30 * var(--u)); }
-  .key[data-k="percent"] svg, .key[data-k="sign"] svg { width: calc(43 * var(--u)); height: calc(43 * var(--u)); }
+  .key[data-k="backspace"] svg { width: calc(40 * var(--u)); height: calc(29 * var(--u)); }
+  .key[data-k="percent"] svg { width: calc(43 * var(--u)); height: calc(43 * var(--u)); }
+  .key[data-k="sign"] svg { width: calc(40 * var(--u)); height: calc(40 * var(--u)); }
   .key.pressed { filter: brightness(1.55); transition: none; }
   .key.op.pressed { filter: brightness(1.25); }
 
@@ -409,7 +412,17 @@ const Calc = (() => {
     else if (k === '%') press('percent');
   });
 
-  window.addEventListener('resize', render);
+  // iOS 主畫面模式下 100% 高度會少算狀態列，改用實際螢幕高度
+  const calcEl = document.querySelector('.calc');
+  function fixHeight() {
+    const h = Math.max(window.innerHeight, document.documentElement.clientHeight,
+                       window.screen && window.navigator.standalone ? screen.height : 0);
+    calcEl.style.height = h + 'px';
+    render();
+  }
+  window.addEventListener('resize', fixHeight);
+  window.addEventListener('orientationchange', () => setTimeout(fixHeight, 300));
+  setTimeout(fixHeight, 0);
   document.addEventListener('gesturestart', e => e.preventDefault());
   document.addEventListener('dblclick', e => e.preventDefault());
   render();
